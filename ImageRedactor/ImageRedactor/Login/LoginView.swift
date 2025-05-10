@@ -9,7 +9,8 @@ import SwiftUI
 
 struct LoginView: View {
     @StateObject private var viewModel = LoginViewModel()
-
+    @State private var rootViewController: UIViewController?
+    
     var body: some View {
         VStack(spacing: 20) {
             Text(viewModel.isRegistering ? "Регистрация" : "Вход")
@@ -42,6 +43,23 @@ struct LoginView: View {
                 .foregroundColor(.white)
                 .cornerRadius(8)
             }
+            Button("Войти через Google") {
+                if let rootVC = rootViewController {
+                    Task {
+                        do {
+                            try await AuthService.shared.signInWithGoogle(presentingVC: rootVC)
+                        }
+//                        catch {
+//                            // Обработка ошибки
+//                        }
+                    }
+                }
+            }
+            .background(
+                ViewControllerResolver { vc in
+                    self.rootViewController = vc
+                }
+            )
             
             Button(viewModel.isRegistering ? "Уже есть аккаунт? Войти" : "Нет аккаунта? Регистрация") {
                 viewModel.isRegistering.toggle()

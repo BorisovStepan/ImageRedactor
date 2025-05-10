@@ -7,6 +7,8 @@
 
 import Foundation
 import FirebaseAuth
+import GoogleSignIn
+import FirebaseCore
 
 @MainActor
 class AuthService: ObservableObject {
@@ -30,5 +32,24 @@ class AuthService: ObservableObject {
     func signOut() {
         try? Auth.auth().signOut()
         isAuthenticated = false
+    }
+ 
+    func signInWithGoogle(presentingVC: UIViewController) async throws {
+        guard let clientID = FirebaseApp.app()?.options.clientID else {
+            throw URLError(.badServerResponse)
+        }
+
+        let config = GIDConfiguration(clientID: clientID)
+
+        let userAuthentication = try await GIDSignIn.sharedInstance.signIn(withPresenting: presentingVC)
+
+        guard let idToken = userAuthentication.user.idToken?.tokenString else {
+            throw URLError(.badServerResponse)
+        }
+
+        let accessToken = userAuthentication.user.accessToken.tokenString
+
+        let credential = GoogleAuthProvider.credential(withIDToken: idToken, accessToken: accessToken)
+        try await Auth.auth().signIn(with: credential)
     }
 }
