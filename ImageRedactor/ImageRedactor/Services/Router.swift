@@ -30,15 +30,21 @@ struct RootView: View {
 
     var body: some View {
         NavigationStack(path: $router.path) {
-            LoginView(router: router)
-                .navigationDestination(for: AppRoute.self) { route in
-                    switch route {
-                    case .login:
-                        LoginView(router: router)
-                    case .main:
-                        MainView(viewModel: MainViewModel(router: router))
-                    }
+            VStack {
+                if router.path.isEmpty {
+                    LoginView(router: router)
+                } else {
+                    EmptyView()
                 }
+            }
+            .navigationDestination(for: AppRoute.self) { route in
+                switch route {
+                case .login:
+                    LoginView(router: router)
+                case .main:
+                    MainView(viewModel: MainViewModel(router: router))
+                }
+            }
         }
     }
 }

@@ -50,9 +50,7 @@ struct LoginView: View {
             Button("Войти через Google") {
                 if let rootVC = rootViewController {
                     Task {
-                        do {
-                            try await AuthService.shared.signInWithGoogle(presentingVC: rootVC)
-                        }
+                        await viewModel.signInWithGoogle(presentingVC: rootVC)
                     }
                 }
             }

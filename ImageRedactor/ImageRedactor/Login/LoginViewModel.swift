@@ -1,10 +1,3 @@
-//
-//  LoginViewModel.swift
-//  ImageRedactor
-//
-//  Created by Stepan Borisov on 10.05.25.
-//
-
 import Combine
 import UIKit
 
@@ -38,7 +31,6 @@ class LoginViewModel: ObservableObject {
             errorMessage = error.localizedDescription
         }
     }
-    
     func signInWithGoogle(presentingVC: UIViewController) async {
         isLoading = true
         defer { isLoading = false }
@@ -46,6 +38,7 @@ class LoginViewModel: ObservableObject {
         do {
             try await AuthService.shared.signInWithGoogle(presentingVC: presentingVC)
             router.navigate(to: .main)
+
         } catch {
             errorMessage = error.localizedDescription
         }
