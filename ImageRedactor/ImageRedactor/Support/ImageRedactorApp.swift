@@ -10,13 +10,16 @@ import FirebaseCore
 
 @main
 struct ImageRedactorApp: App {
+    @StateObject private var router = Router()
+    
     init() {
         FirebaseApp.configure()
     }
     
     var body: some Scene {
         WindowGroup {
-            LoginView()
+            RootView()
+                .environmentObject(router)
         }
     }
 }

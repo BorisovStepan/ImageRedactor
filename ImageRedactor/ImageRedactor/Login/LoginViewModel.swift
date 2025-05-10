@@ -5,12 +5,8 @@
 //  Created by Stepan Borisov on 10.05.25.
 //
 
-import Foundation
-
-private enum Constants {
-    static let successSignInMessage: String = "Вход выполнен"
-    static let successRegisterMessage: String = "Вход выполнен"
-}
+import Combine
+import UIKit
 
 @MainActor
 class LoginViewModel: ObservableObject {
@@ -19,7 +15,13 @@ class LoginViewModel: ObservableObject {
     @Published var isRegistering: Bool = false
     @Published var errorMessage: String?
     @Published var isLoading: Bool = false
-    @Published var successMessage: String?
+    @Published var shouldNavigateToMain: Bool = false
+
+    private let router: Router
+
+    init(router: Router) {
+        self.router = router
+    }
 
     func submit() async {
         isLoading = true
@@ -28,11 +30,22 @@ class LoginViewModel: ObservableObject {
         do {
             if isRegistering {
                 try await AuthService.shared.register(email: credentials.email, password: credentials.password)
-                successMessage = Constants.successRegisterMessage
             } else {
                 try await AuthService.shared.signIn(email: credentials.email, password: credentials.password)
-                successMessage = Constants.successSignInMessage
             }
+            router.navigate(to: .main)
+        } catch {
+            errorMessage = error.localizedDescription
+        }
+    }
+    
+    func signInWithGoogle(presentingVC: UIViewController) async {
+        isLoading = true
+        defer { isLoading = false }
+
+        do {
+            try await AuthService.shared.signInWithGoogle(presentingVC: presentingVC)
+            router.navigate(to: .main)
         } catch {
             errorMessage = error.localizedDescription
         }

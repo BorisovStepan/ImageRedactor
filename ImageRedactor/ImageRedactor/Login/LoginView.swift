@@ -8,27 +8,31 @@
 import SwiftUI
 
 struct LoginView: View {
-    @StateObject private var viewModel = LoginViewModel()
+    @StateObject private var viewModel: LoginViewModel
     @State private var rootViewController: UIViewController?
+    
+    init(router: Router) {
+        _viewModel = StateObject(wrappedValue: LoginViewModel(router: router))
+    }
     
     var body: some View {
         VStack(spacing: 20) {
             Text(viewModel.isRegistering ? "Регистрация" : "Вход")
                 .font(.largeTitle)
                 .bold()
-
+            
             TextField("Email", text: $viewModel.credentials.email)
                 .keyboardType(.emailAddress)
                 .autocapitalization(.none)
                 .padding()
                 .background(Color(.secondarySystemBackground))
                 .cornerRadius(8)
-
+            
             SecureField("Пароль", text: $viewModel.credentials.password)
                 .padding()
                 .background(Color(.secondarySystemBackground))
                 .cornerRadius(8)
-
+            
             if viewModel.isLoading {
                 ProgressView()
             } else {
@@ -49,12 +53,14 @@ struct LoginView: View {
                         do {
                             try await AuthService.shared.signInWithGoogle(presentingVC: rootVC)
                         }
-//                        catch {
-//                            // Обработка ошибки
-//                        }
                     }
                 }
             }
+            .frame(maxWidth: .infinity)
+            .padding()
+            .background(Color.blue)
+            .foregroundColor(.white)
+            .cornerRadius(8)
             .background(
                 ViewControllerResolver { vc in
                     self.rootViewController = vc
@@ -73,13 +79,6 @@ struct LoginView: View {
             }
         } message: {
             Text(viewModel.errorMessage ?? "")
-        }
-        .alert("Готово", isPresented: .constant(viewModel.successMessage != nil)) {
-            Button("ОК", role: .cancel) {
-                viewModel.successMessage = nil
-            }
-        } message: {
-            Text(viewModel.successMessage ?? "")
         }
     }
 }
