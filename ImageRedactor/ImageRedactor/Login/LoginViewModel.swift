@@ -4,7 +4,7 @@ import UIKit
 @MainActor
 class LoginViewModel: ObservableObject {
 
-    @Published var credentials = UserCredentials(email: "", password: "")
+    @Published var credentials = UserCredentials(email: .empty, password: .empty)
     @Published var isRegistering: Bool = false
     @Published var errorMessage: String?
     @Published var isLoading: Bool = false

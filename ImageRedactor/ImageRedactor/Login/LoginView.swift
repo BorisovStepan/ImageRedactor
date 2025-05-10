@@ -7,6 +7,19 @@
 
 import SwiftUI
 
+private enum Constants {
+    static let registratingText = "Регистрация"
+    static let loginText = "Войти"
+    static let createAccount = "Создать аккаунт"
+    static let emailField = "Email"
+    static let passwordField = "Password"
+    static let googleButtonText = "Войти через Google"
+    static let okText = "Ok"
+    static let errorText = "Ошибка"
+    static let loginModeButtonText = "Уже есть аккаунт? Войти"
+    static let registerModeButtonText = "Нет аккаунта? Регистрация"
+}
+
 struct LoginView: View {
     @StateObject private var viewModel: LoginViewModel
     @State private var rootViewController: UIViewController?
@@ -16,29 +29,45 @@ struct LoginView: View {
     }
     
     var body: some View {
-        VStack(spacing: 20) {
-            Text(viewModel.isRegistering ? "Регистрация" : "Вход")
-                .font(.largeTitle)
-                .bold()
-            
-            TextField("Email", text: $viewModel.credentials.email)
-                .keyboardType(.emailAddress)
-                .autocapitalization(.none)
-                .padding()
-                .background(Color(.secondarySystemBackground))
-                .cornerRadius(8)
-            
-            SecureField("Пароль", text: $viewModel.credentials.password)
-                .padding()
-                .background(Color(.secondarySystemBackground))
-                .cornerRadius(8)
-            
-            if viewModel.isLoading {
-                ProgressView()
-            } else {
-                Button(viewModel.isRegistering ? "Создать аккаунт" : "Войти") {
-                    Task {
-                        await viewModel.submit()
+        ZStack {
+            Color.clear
+            VStack(spacing: 20) {
+                Text(viewModel.isRegistering ? Constants.registratingText : Constants.loginText)
+                    .font(.largeTitle)
+                    .bold()
+
+                TextField(Constants.emailField, text: $viewModel.credentials.email)
+                    .keyboardType(.emailAddress)
+                    .autocapitalization(.none)
+                    .padding()
+                    .background(Color(.secondarySystemBackground))
+                    .cornerRadius(8)
+
+                SecureField(Constants.passwordField, text: $viewModel.credentials.password)
+                    .padding()
+                    .background(Color(.secondarySystemBackground))
+                    .cornerRadius(8)
+
+                if viewModel.isLoading {
+                    ProgressView()
+                } else {
+                    Button(viewModel.isRegistering ? Constants.createAccount : Constants.loginText) {
+                        Task {
+                            await viewModel.submit()
+                        }
+                    }
+                    .frame(maxWidth: .infinity)
+                    .padding()
+                    .background(Color.blue)
+                    .foregroundColor(.white)
+                    .cornerRadius(8)
+                }
+
+                Button(Constants.googleButtonText) {
+                    if let rootVC = rootViewController {
+                        Task {
+                            await viewModel.signInWithGoogle(presentingVC: rootVC)
+                        }
                     }
                 }
                 .frame(maxWidth: .infinity)
@@ -46,37 +75,26 @@ struct LoginView: View {
                 .background(Color.blue)
                 .foregroundColor(.white)
                 .cornerRadius(8)
-            }
-            Button("Войти через Google") {
-                if let rootVC = rootViewController {
-                    Task {
-                        await viewModel.signInWithGoogle(presentingVC: rootVC)
+                .background(
+                    ViewControllerResolver { vc in
+                        self.rootViewController = vc
                     }
+                )
+
+                Button(viewModel.isRegistering ? Constants.loginModeButtonText : Constants.registerModeButtonText) {
+                    viewModel.isRegistering.toggle()
                 }
+                .font(.footnote)
             }
-            .frame(maxWidth: .infinity)
             .padding()
-            .background(Color.blue)
-            .foregroundColor(.white)
-            .cornerRadius(8)
-            .background(
-                ViewControllerResolver { vc in
-                    self.rootViewController = vc
-                }
-            )
-            
-            Button(viewModel.isRegistering ? "Уже есть аккаунт? Войти" : "Нет аккаунта? Регистрация") {
-                viewModel.isRegistering.toggle()
-            }
-            .font(.footnote)
         }
-        .padding()
-        .alert("Ошибка", isPresented: .constant(viewModel.errorMessage != nil)) {
-            Button("ОК", role: .cancel) {
+        .hideKeyboardOnTap()
+        .alert(Constants.errorText, isPresented: .constant(viewModel.errorMessage != nil)) {
+            Button(Constants.okText, role: .cancel) {
                 viewModel.errorMessage = nil
             }
         } message: {
-            Text(viewModel.errorMessage ?? "")
+            Text(viewModel.errorMessage ?? .empty)
         }
     }
 }

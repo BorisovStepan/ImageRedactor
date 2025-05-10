@@ -1,6 +1,7 @@
 {
   "images" : [
     {
+      "filename" : "IRlogo.png",
       "idiom" : "universal",
       "platform" : "ios",
       "size" : "1024x1024"
@@ -12,6 +13,7 @@
           "value" : "dark"
         }
       ],
+      "filename" : "IRlogo 1.png",
       "idiom" : "universal",
       "platform" : "ios",
       "size" : "1024x1024"
@@ -23,6 +25,7 @@
           "value" : "tinted"
         }
       ],
+      "filename" : "IRlogo 2.png",
       "idiom" : "universal",
       "platform" : "ios",
       "size" : "1024x1024"
