@@ -83,7 +83,7 @@ struct MainView: View {
         }
         .sheet(isPresented: $viewModel.isEditorOpen) {
             if let image = viewModel.selectedImage {
-//                PhotoEditorView(image: image)
+                EditorView(image: image)
             }
         }
     }
