@@ -52,7 +52,8 @@ struct LoginView: View {
                     title: viewModel.isRegistering ? Constants.createAccount : Constants.loginText,
                     backgroundColor: .blue,
                     textColor: .white,
-                    isLoading: viewModel.isLoading
+                    isLoading: viewModel.isLoading,
+                    isDisabled: false
                 ) {
                     Task {
                         await viewModel.submit()
@@ -63,7 +64,8 @@ struct LoginView: View {
                     title: Constants.googleButtonText,
                     backgroundColor: .blue,
                     textColor: .white,
-                    isLoading: viewModel.googleLoginIsLoading
+                    isLoading: viewModel.googleLoginIsLoading,
+                    isDisabled: false
                 ) {
                     if let rootVC = rootViewController {
                         Task {

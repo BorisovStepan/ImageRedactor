@@ -6,29 +6,84 @@
 //
 
 import SwiftUI
+import PhotosUI
+
+private enum Constants {
+    static let imagePickerTitle: String = "Выберите изображение"
+    static let imagePickerButtonTitle: String = "Выбрать фото"
+    static let imageRedactorButtonTitle: String = "Редактировать"
+    static let title: String = "Главная"
+    static let exitText: String = "Выйти"
+}
 
 struct MainView: View {
-    @StateObject var viewModel: MainViewModel
+    @StateObject private var viewModel: MainViewModel
 
+    init(router: Router) {
+        _viewModel = StateObject(wrappedValue: MainViewModel(router: router))
+    }
+    
     var body: some View {
-        VStack {
-            Spacer()
+        VStack(spacing: 20) {
+            if let image = viewModel.selectedImage {
+                GeometryReader { geo in
+                    Image(uiImage: image)
+                        .resizable()
+                        .aspectRatio(contentMode: .fit)
+                        .frame(width: geo.size.width)
+                        .clipped()
+                        .transition(.opacity)
+                        .animation(.easeInOut(duration: 0.5), value: viewModel.selectedImage)
+                }
+                .frame(height: UIScreen.main.bounds.height * 0.4)
+                .background(Color.gray.opacity(0.1))
+            } else {
+                Spacer()
+                Text(Constants.imagePickerTitle)
+                    .font(.title)
+                    .fontWeight(.semibold)
+                    .multilineTextAlignment(.center)
+                    .foregroundColor(.gray)
+                Spacer()
+            }
 
-            Text("Добро пожаловать!")
-                .font(.largeTitle)
-                .fontWeight(.bold)
-                .padding()
+            VStack(spacing: 16) {
+                PhotosPicker(selection: $viewModel.selectedItem, matching: .images) {
+                    Text(Constants.imagePickerButtonTitle)
+                        .frame(maxWidth: .infinity)
+                        .padding()
+                        .background(Color.blue)
+                        .foregroundColor(.white)
+                        .cornerRadius(8)
+                }
+                ProgressButton(
+                    title: Constants.imageRedactorButtonTitle,
+                    backgroundColor: .green,
+                    textColor: .white,
+                    isLoading: false,
+                    isDisabled: viewModel.selectedImage == nil
+                ) {
+                    viewModel.isEditorOpen = true
+                }
+            }
+            .padding(.horizontal)
 
             Spacer()
         }
+        .padding()
+        .navigationTitle(Constants.title)
         .navigationBarBackButtonHidden(true)
-        .navigationTitle("Главная")
         .toolbar {
             ToolbarItem(placement: .navigationBarTrailing) {
-                Button("Выйти") {
+                Button(Constants.exitText) {
                     viewModel.signOut()
                 }
                 .foregroundColor(.red)
+            }
+        }
+        .sheet(isPresented: $viewModel.isEditorOpen) {
+            if let image = viewModel.selectedImage {
+//                PhotoEditorView(image: image)
             }
         }
     }
