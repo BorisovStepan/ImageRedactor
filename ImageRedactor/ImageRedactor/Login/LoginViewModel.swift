@@ -8,6 +8,7 @@ class LoginViewModel: ObservableObject {
     @Published var isRegistering: Bool = false
     @Published var errorMessage: String?
     @Published var isLoading: Bool = false
+    @Published var googleLoginIsLoading: Bool = false
     @Published var shouldNavigateToMain: Bool = false
 
     private let router: Router
@@ -32,8 +33,8 @@ class LoginViewModel: ObservableObject {
         }
     }
     func signInWithGoogle(presentingVC: UIViewController) async {
-        isLoading = true
-        defer { isLoading = false }
+        googleLoginIsLoading = true
+        defer { googleLoginIsLoading = false }
 
         do {
             try await AuthService.shared.signInWithGoogle(presentingVC: presentingVC)

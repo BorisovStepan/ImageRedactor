@@ -23,11 +23,11 @@ private enum Constants {
 struct LoginView: View {
     @StateObject private var viewModel: LoginViewModel
     @State private var rootViewController: UIViewController?
-    
+
     init(router: Router) {
         _viewModel = StateObject(wrappedValue: LoginViewModel(router: router))
     }
-    
+
     var body: some View {
         ZStack {
             Color.clear
@@ -48,33 +48,29 @@ struct LoginView: View {
                     .background(Color(.secondarySystemBackground))
                     .cornerRadius(8)
 
-                if viewModel.isLoading {
-                    ProgressView()
-                } else {
-                    Button(viewModel.isRegistering ? Constants.createAccount : Constants.loginText) {
-                        Task {
-                            await viewModel.submit()
-                        }
+                ProgressButton(
+                    title: viewModel.isRegistering ? Constants.createAccount : Constants.loginText,
+                    backgroundColor: .blue,
+                    textColor: .white,
+                    isLoading: viewModel.isLoading
+                ) {
+                    Task {
+                        await viewModel.submit()
                     }
-                    .frame(maxWidth: .infinity)
-                    .padding()
-                    .background(Color.blue)
-                    .foregroundColor(.white)
-                    .cornerRadius(8)
                 }
 
-                Button(Constants.googleButtonText) {
+                ProgressButton(
+                    title: Constants.googleButtonText,
+                    backgroundColor: .blue,
+                    textColor: .white,
+                    isLoading: viewModel.googleLoginIsLoading
+                ) {
                     if let rootVC = rootViewController {
                         Task {
                             await viewModel.signInWithGoogle(presentingVC: rootVC)
                         }
                     }
                 }
-                .frame(maxWidth: .infinity)
-                .padding()
-                .background(Color.blue)
-                .foregroundColor(.white)
-                .cornerRadius(8)
                 .background(
                     ViewControllerResolver { vc in
                         self.rootViewController = vc
