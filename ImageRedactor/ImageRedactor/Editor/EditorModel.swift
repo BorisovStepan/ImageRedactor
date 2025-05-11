@@ -14,7 +14,7 @@ enum EditorTool: String, CaseIterable, Identifiable {
     case draw = "Рисование"
     case text = "Текст"
     case filters = "Фильтры"
-
+    
     var id: String { self.rawValue }
 }
 

@@ -1,3 +1,10 @@
+//
+//  LoginView.swift
+//  ImageRedactor
+//
+//  Created by Stepan Borisov on 10.05.25.
+//
+
 import Combine
 import UIKit
 
@@ -15,6 +22,7 @@ class LoginViewModel: ObservableObject {
     @Published var showResetPasswordSheet = false
     @Published var resetEmail: String = .empty
     @Published var successMessage: String = .empty
+    @Published var infoMessage: String?
     
     private let router: Router
     
@@ -54,10 +62,11 @@ class LoginViewModel: ObservableObject {
         do {
             if isRegistering {
                 try await AuthService.shared.register(email: credentials.email, password: credentials.password)
+                infoMessage = "Письмо для подтверждения отправлено. Пожалуйста, проверьте почту."
             } else {
                 try await AuthService.shared.signIn(email: credentials.email, password: credentials.password)
+                router.navigate(to: .main)
             }
-            router.navigate(to: .main)
         } catch {
             errorMessage = error.localizedDescription
         }

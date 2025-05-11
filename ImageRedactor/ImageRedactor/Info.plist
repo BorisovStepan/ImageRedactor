@@ -15,5 +15,7 @@
 	</array>
 	<key>GIDClientID</key>
 	<string>622959067082-cleqrovv72v2eo0e6j56crr25c431tml.apps.googleusercontent.com</string>
+	<key>UILaunchScreen</key>
+	<dict/>
 </dict>
 </plist>

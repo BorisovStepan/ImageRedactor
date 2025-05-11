@@ -18,7 +18,7 @@ private enum Constants {
 
 struct MainView: View {
     @StateObject private var viewModel: MainViewModel
-
+    
     init(router: Router) {
         _viewModel = StateObject(wrappedValue: MainViewModel(router: router))
     }
@@ -46,7 +46,7 @@ struct MainView: View {
                     .foregroundColor(.gray)
                 Spacer()
             }
-
+            
             VStack(spacing: 16) {
                 PhotosPicker(selection: $viewModel.selectedItem, matching: .images) {
                     Text(Constants.imagePickerButtonTitle)
@@ -67,7 +67,7 @@ struct MainView: View {
                 }
             }
             .padding(.horizontal)
-
+            
             Spacer()
         }
         .padding()

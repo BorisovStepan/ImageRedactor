@@ -5,10 +5,10 @@
 //  Created by Stepan Borisov on 10.05.25.
 //
 
-import Foundation
 import FirebaseAuth
-import GoogleSignIn
 import FirebaseCore
+import GoogleSignIn
+import SwiftUI
 
 @MainActor
 class AuthService: ObservableObject {
@@ -19,14 +19,22 @@ class AuthService: ObservableObject {
     private init() {}
     
     func signIn(email: String, password: String) async throws {
-        try await Auth.auth().signIn(withEmail: email, password: password)
+        let result = try await Auth.auth().signIn(withEmail: email, password: password)
+        
+        guard result.user.isEmailVerified else {
+            try Auth.auth().signOut()
+            throw AuthError.emailNotVerified
+        }
+        
         isAuthenticated = true
     }
     
     func register(email: String, password: String) async throws {
         let result = try await Auth.auth().createUser(withEmail: email, password: password)
         try await result.user.sendEmailVerification()
-        isAuthenticated = true
+        
+        try Auth.auth().signOut()
+        isAuthenticated = false
     }
     
     func signOut() {
@@ -35,11 +43,9 @@ class AuthService: ObservableObject {
     }
     
     func signInWithGoogle(presentingVC: UIViewController) async throws {
-        guard let clientID = FirebaseApp.app()?.options.clientID else {
+        guard (FirebaseApp.app()?.options.clientID) != nil else {
             throw URLError(.badServerResponse)
         }
-        
-        let config = GIDConfiguration(clientID: clientID)
         
         let userAuthentication = try await GIDSignIn.sharedInstance.signIn(withPresenting: presentingVC)
         
@@ -48,13 +54,24 @@ class AuthService: ObservableObject {
         }
         
         let accessToken = userAuthentication.user.accessToken.tokenString
-        
         let credential = GoogleAuthProvider.credential(withIDToken: idToken, accessToken: accessToken)
         
         try await Auth.auth().signIn(with: credential)
+        isAuthenticated = true
     }
     
     func resetPassword(email: String) async throws {
         try await Auth.auth().sendPasswordReset(withEmail: email)
+    }
+}
+
+enum AuthError: LocalizedError {
+    case emailNotVerified
+    
+    var errorDescription: String? {
+        switch self {
+        case .emailNotVerified:
+            return "Email не подтвержден. Пожалуйста, проверьте почту."
+        }
     }
 }

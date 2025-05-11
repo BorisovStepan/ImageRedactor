@@ -15,15 +15,15 @@ class MainViewModel: ObservableObject {
     @Published var selectedImage: UIImage?
     @Published var selectedItem: PhotosPickerItem?
     @Published var isEditorOpen = false
-
+    
     private var cancellables = Set<AnyCancellable>()
     private let router: Router
-
+    
     init(router: Router) {
         self.router = router
         setupBindings()
     }
-
+    
     private func setupBindings() {
         $selectedItem
             .compactMap { $0 }
@@ -40,7 +40,7 @@ class MainViewModel: ObservableObject {
             }
             .store(in: &cancellables)
     }
-
+    
     func signOut() {
         AuthService.shared.signOut()
         router.reset()
