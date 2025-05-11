@@ -53,4 +53,8 @@ class AuthService: ObservableObject {
         
         try await Auth.auth().signIn(with: credential)
     }
+    
+    func resetPassword(email: String) async throws {
+        try await Auth.auth().sendPasswordReset(withEmail: email)
+    }
 }
