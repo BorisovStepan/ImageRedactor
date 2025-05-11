@@ -12,22 +12,24 @@ private enum Constants {
     static let loginText = "Войти"
     static let createAccount = "Создать аккаунт"
     static let emailField = "Email"
-    static let passwordField = "Password"
+    static let passwordField = "Пароль"
     static let googleButtonText = "Войти через Google"
-    static let okText = "Ok"
+    static let okText = "Ок"
     static let errorText = "Ошибка"
+    static let infoText = "Информация"
     static let loginModeButtonText = "Уже есть аккаунт? Войти"
     static let registerModeButtonText = "Нет аккаунта? Регистрация"
+    static let forgotPasswordButtonText = "Забыли пароль?"
 }
 
 struct LoginView: View {
     @StateObject private var viewModel: LoginViewModel
     @State private var rootViewController: UIViewController?
-
+    
     init(router: Router) {
         _viewModel = StateObject(wrappedValue: LoginViewModel(router: router))
     }
-
+    
     var body: some View {
         ZStack {
             Color.clear
@@ -35,19 +37,42 @@ struct LoginView: View {
                 Text(viewModel.isRegistering ? Constants.registratingText : Constants.loginText)
                     .font(.largeTitle)
                     .bold()
-
+                
                 TextField(Constants.emailField, text: $viewModel.credentials.email)
                     .keyboardType(.emailAddress)
                     .autocapitalization(.none)
                     .padding()
-                    .background(Color(.secondarySystemBackground))
-                    .cornerRadius(8)
-
+                    .background(
+                        RoundedRectangle(cornerRadius: 8)
+                            .stroke(viewModel.emailError == nil ? Color(.secondarySystemBackground) : Color.red, lineWidth: 2)
+                    )
+                    .onChange(of: viewModel.credentials.email) {
+                        viewModel.emailError = nil
+                    }
+                
+                if let emailError = viewModel.emailError {
+                    Text(emailError)
+                        .foregroundColor(.red)
+                        .font(.caption)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                }
+                
                 SecureField(Constants.passwordField, text: $viewModel.credentials.password)
                     .padding()
-                    .background(Color(.secondarySystemBackground))
-                    .cornerRadius(8)
-
+                    .background(
+                        RoundedRectangle(cornerRadius: 8)
+                            .stroke(viewModel.passwordError == nil ? Color(.secondarySystemBackground) : Color.red, lineWidth: 2)
+                    )
+                    .onChange(of: viewModel.credentials.password) {
+                        viewModel.passwordError = nil
+                    }
+                
+                if let passwordError = viewModel.passwordError {
+                    Text(passwordError)
+                        .foregroundColor(.red)
+                        .font(.caption)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                }
                 ProgressButton(
                     title: viewModel.isRegistering ? Constants.createAccount : Constants.loginText,
                     backgroundColor: .blue,
@@ -59,7 +84,6 @@ struct LoginView: View {
                         await viewModel.submit()
                     }
                 }
-
                 ProgressButton(
                     title: Constants.googleButtonText,
                     backgroundColor: .blue,
@@ -78,11 +102,18 @@ struct LoginView: View {
                         self.rootViewController = vc
                     }
                 )
-
                 Button(viewModel.isRegistering ? Constants.loginModeButtonText : Constants.registerModeButtonText) {
                     viewModel.isRegistering.toggle()
                 }
                 .font(.footnote)
+                .padding(.top, 8)
+                if !viewModel.isRegistering {
+                    Button(Constants.forgotPasswordButtonText) {
+                        viewModel.showResetPasswordSheet = true
+                    }
+                    .font(.footnote)
+                    .padding(.top, 5)
+                }
             }
             .padding()
         }
@@ -93,6 +124,16 @@ struct LoginView: View {
             }
         } message: {
             Text(viewModel.errorMessage ?? .empty)
+        }
+        .alert(Constants.infoText, isPresented: .constant(viewModel.infoMessage != nil)) {
+            Button(Constants.okText, role: .cancel) {
+                viewModel.infoMessage = nil
+            }
+        } message: {
+            Text(viewModel.infoMessage ?? .empty)
+        }
+        .sheet(isPresented: $viewModel.showResetPasswordSheet) {
+            ResetPasswordSheet(viewModel: viewModel)
         }
     }
 }

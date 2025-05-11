@@ -14,11 +14,11 @@ import CoreImage.CIFilterBuiltins
 struct EditorView: View {
     @StateObject var viewModel: EditorViewModel
     @Environment(\.dismiss) private var dismiss
-
+    
     init(image: UIImage) {
         _viewModel = StateObject(wrappedValue: EditorViewModel(image: image))
     }
-
+    
     var body: some View {
         VStack(spacing: 0) {
             GeometryReader { geo in
@@ -30,11 +30,11 @@ struct EditorView: View {
                         .rotationEffect(.degrees(viewModel.transformSettings.rotation))
                         .frame(width: geo.size.width, height: geo.size.height)
                         .clipped()
-
+                    
                     DrawingCanvas(canvasView: $viewModel.canvasView)
                         .frame(width: geo.size.width, height: geo.size.height)
                         .allowsHitTesting(viewModel.selectedTool == .draw)
-
+                    
                     if !viewModel.textSettings.content.isEmpty {
                         Text(viewModel.textSettings.content)
                             .font(.system(size: viewModel.textSettings.size))
@@ -57,8 +57,7 @@ struct EditorView: View {
             }
             .frame(height: UIScreen.main.bounds.height * 0.4)
             .padding(.vertical)
-
-            // Инструменты
+            
             ScrollView(.horizontal, showsIndicators: false) {
                 HStack(spacing: 12) {
                     ForEach(EditorTool.allCases, id: \.self) { tool in
@@ -75,7 +74,7 @@ struct EditorView: View {
                 .padding(.horizontal)
             }
             .padding(.vertical, 8)
-
+            
             VStack(spacing: 16) {
                 switch viewModel.selectedTool {
                 case .transform:
@@ -86,7 +85,7 @@ struct EditorView: View {
                         Slider(value: $viewModel.transformSettings.rotation, in: 0...360)
                     }
                     .padding()
-
+                    
                 case .draw:
                     VStack {
                         ColorPicker("Цвет пера", selection: Binding(
@@ -104,7 +103,7 @@ struct EditorView: View {
                         }
                     }
                     .padding()
-
+                    
                 case .text:
                     VStack {
                         TextField("Введите текст", text: $viewModel.textSettings.content)
@@ -115,7 +114,7 @@ struct EditorView: View {
                         }
                     }
                     .padding()
-
+                    
                 case .filters:
                     HStack(spacing: 16) {
                         Button(action: {
@@ -166,7 +165,7 @@ struct EditorView: View {
                 }
             }
             .frame(maxHeight: 220)
-
+            
             Spacer()
             HStack(spacing: 16) {
                 Button("Сохранить") {
@@ -177,7 +176,7 @@ struct EditorView: View {
                 .background(Color.blue)
                 .foregroundColor(.white)
                 .cornerRadius(10)
-
+                
                 Button("Поделиться") {
                     viewModel.showShareSheet = true
                 }
