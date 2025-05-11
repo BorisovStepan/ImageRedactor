@@ -11,191 +11,235 @@ import PhotosUI
 import CoreImage
 import CoreImage.CIFilterBuiltins
 
+private enum Constants {
+    static let editTitle = "Редактирование"
+    static let saveButtonTitle = "Сохранить"
+    static let shareButtonTitle = "Поделиться"
+    static let originalTitle = "Оригинал"
+    static let sepiaTitle = "Сепия"
+    static let invertTitle = "Инверт"
+    static let scaleLabel = "Масштаб"
+    static let rotationLabel = "Поворот"
+    static let penColorLabel = "Цвет пера"
+    static let lineWidthLabel = "Толщина линии"
+    static let textColorLabel = "Цвет текста"
+    static let textSizeLabel = "Размер текста"
+    static let enterTextPlaceholder = "Введите текст"
+}
+
 struct EditorView: View {
-    @StateObject var viewModel: EditorViewModel
+    @StateObject private var viewModel: EditorViewModel
     @Environment(\.dismiss) private var dismiss
-    
+
     init(image: UIImage) {
         _viewModel = StateObject(wrappedValue: EditorViewModel(image: image))
     }
-    
+
     var body: some View {
+        content
+            .sheet(isPresented: $viewModel.showShareSheet) {
+                if let shareImage = viewModel.shareImage {
+                    ActivityView(items: [shareImage])
+                }
+            }
+            .navigationTitle(Constants.editTitle)
+            .onChange(of: viewModel.shouldDismissEditor) {
+                if viewModel.shouldDismissEditor {
+                    dismiss()
+                }
+            }
+    }
+
+    private var content: some View {
         VStack(spacing: 0) {
-            GeometryReader { geo in
-                ZStack {
-                    Image(uiImage: viewModel.workingImage)
-                        .resizable()
-                        .aspectRatio(contentMode: .fit)
-                        .scaleEffect(viewModel.transformSettings.scale)
-                        .rotationEffect(.degrees(viewModel.transformSettings.rotation))
-                        .frame(width: geo.size.width, height: geo.size.height)
-                        .clipped()
-                    
-                    DrawingCanvas(canvasView: $viewModel.canvasView)
-                        .frame(width: geo.size.width, height: geo.size.height)
-                        .allowsHitTesting(viewModel.selectedTool == .draw)
-                    
-                    if !viewModel.textSettings.content.isEmpty {
-                        Text(viewModel.textSettings.content)
-                            .font(.system(size: viewModel.textSettings.size))
-                            .foregroundColor(viewModel.textSettings.color)
-                            .padding(6)
-                            .background(Color.black.opacity(0.3))
-                            .cornerRadius(8)
-                            .position(viewModel.textSettings.position)
-                            .gesture(
-                                DragGesture()
-                                    .onChanged { value in
-                                        if viewModel.selectedTool == .text {
-                                            viewModel.textSettings.position = value.location
-                                        }
-                                    }
-                            )
-                    }
-                }
-                .clipped()
-            }
-            .frame(height: UIScreen.main.bounds.height * 0.4)
-            .padding(.vertical)
-            
-            ScrollView(.horizontal, showsIndicators: false) {
-                HStack(spacing: 12) {
-                    ForEach(EditorTool.allCases, id: \.self) { tool in
-                        Button(tool.rawValue) {
-                            viewModel.selectedTool = tool
-                        }
-                        .padding(.vertical, 8)
-                        .padding(.horizontal, 12)
-                        .background(viewModel.selectedTool == tool ? Color.blue : Color.gray.opacity(0.3))
-                        .foregroundColor(.white)
-                        .cornerRadius(8)
-                    }
-                }
-                .padding(.horizontal)
-            }
-            .padding(.vertical, 8)
-            
-            VStack(spacing: 16) {
-                switch viewModel.selectedTool {
-                case .transform:
-                    VStack {
-                        Text("Масштабирование и Поворот")
-                            .font(.headline)
-                        Slider(value: $viewModel.transformSettings.scale, in: 0.5...2)
-                        Slider(value: $viewModel.transformSettings.rotation, in: 0...360)
-                    }
-                    .padding()
-                    
-                case .draw:
-                    VStack {
-                        ColorPicker("Цвет пера", selection: Binding(
-                            get: { Color(viewModel.drawingSettings.color) },
-                            set: { newColor in
-                                viewModel.drawingSettings.color = UIColor(newColor)
-                                viewModel.updateDrawingTool()
-                            }
-                        ))
-                        Slider(value: $viewModel.drawingSettings.lineWidth, in: 1...15, step: 1) {
-                            Text("Толщина линии")
-                        }
-                        .onChange(of: viewModel.drawingSettings.lineWidth) {
-                            viewModel.updateDrawingTool()
-                        }
-                    }
-                    .padding()
-                    
-                case .text:
-                    VStack {
-                        TextField("Введите текст", text: $viewModel.textSettings.content)
-                            .textFieldStyle(.roundedBorder)
-                        ColorPicker("Цвет текста", selection: $viewModel.textSettings.color)
-                        Slider(value: $viewModel.textSettings.size, in: 10...60, step: 1) {
-                            Text("Размер текста")
-                        }
-                    }
-                    .padding()
-                    
-                case .filters:
-                    HStack(spacing: 16) {
-                        Button(action: {
-                            viewModel.resetImage()
-                        }) {
-                            VStack {
-                                Image(uiImage: viewModel.originalImage)
-                                    .resizable()
-                                    .frame(width: 60, height: 60)
-                                    .cornerRadius(8)
-                                Text("Оригинал")
-                                    .font(.caption)
-                                    .foregroundColor(.primary)
-                            }
-                        }
-                        if let sepiaPreview = viewModel.generateFilterPreview(type: .sepia) {
-                            Button(action: {
-                                viewModel.applySepia()
-                            }) {
-                                VStack {
-                                    Image(uiImage: sepiaPreview)
-                                        .resizable()
-                                        .frame(width: 60, height: 60)
-                                        .cornerRadius(8)
-                                    Text("Сепия")
-                                        .font(.caption)
-                                        .foregroundColor(.primary)
-                                }
-                            }
-                        }
-                        if let invertPreview = viewModel.generateFilterPreview(type: .invert) {
-                            Button(action: {
-                                viewModel.applyInvert()
-                            }) {
-                                VStack {
-                                    Image(uiImage: invertPreview)
-                                        .resizable()
-                                        .frame(width: 60, height: 60)
-                                        .cornerRadius(8)
-                                    Text("Инверт")
-                                        .font(.caption)
-                                        .foregroundColor(.primary)
-                                }
-                            }
-                        }
-                    }
-                    .padding(.horizontal)
-                }
-            }
-            .frame(maxHeight: 220)
-            
+            editorCanvas
+            toolSelection
+            editorOptions
             Spacer()
-            HStack(spacing: 16) {
-                Button("Сохранить") {
-                    viewModel.saveImage()
-                }
-                .frame(maxWidth: .infinity)
-                .padding()
-                .background(Color.blue)
-                .foregroundColor(.white)
-                .cornerRadius(10)
+            bottomButtons
+        }
+        .padding(.horizontal)
+    }
+
+    private var editorCanvas: some View {
+        ZStack {
+            Group {
+                Image(uiImage: viewModel.workingImage)
+                    .resizable()
+                    .aspectRatio(contentMode: .fit)
+                    .scaleEffect(viewModel.transformSettings.scale)
+                    .rotationEffect(.degrees(viewModel.transformSettings.rotation))
+                    .clipped()
                 
-                Button("Поделиться") {
-                    viewModel.showShareSheet = true
+                DrawingCanvas(canvasView: $viewModel.canvasView)
+                    .allowsHitTesting(viewModel.selectedTool == .draw)
+            }
+            .frame(maxWidth: .infinity, maxHeight: UIScreen.main.bounds.height * 0.4)
+            
+            if !viewModel.textSettings.content.isEmpty {
+                Text(viewModel.textSettings.content)
+                    .font(.system(size: viewModel.textSettings.size))
+                    .foregroundColor(viewModel.textSettings.color)
+                    .padding(6)
+                    .background(Color.black.opacity(0.3))
+                    .cornerRadius(8)
+                    .position(viewModel.textSettings.position)
+                    .gesture(
+                        DragGesture()
+                            .onChanged { value in
+                                if viewModel.selectedTool == .text {
+                                    viewModel.textSettings.position = value.location
+                                }
+                            }
+                    )
+            }
+        }
+        .frame(height: UIScreen.main.bounds.height * 0.4)
+        .padding(.vertical)
+    }
+
+    private var toolSelection: some View {
+        ScrollView(.horizontal, showsIndicators: false) {
+            HStack(spacing: 12) {
+                ForEach(EditorTool.allCases, id: \.id) { tool in
+                    Button(tool.rawValue) {
+                        viewModel.selectedTool = tool
+                        if tool == .filters {
+                            viewModel.loadFilterPreviews()
+                        }
+                    }
+                    .padding(.vertical, 8)
+                    .padding(.horizontal, 12)
+                    .background(viewModel.selectedTool == tool ? Color.blue : Color.gray.opacity(0.3))
+                    .foregroundColor(.white)
+                    .cornerRadius(8)
                 }
-                .frame(maxWidth: .infinity)
-                .padding()
-                .background(Color.blue)
-                .foregroundColor(.white)
-                .cornerRadius(10)
             }
             .padding(.horizontal)
         }
-        .sheet(isPresented: $viewModel.showShareSheet) {
-            ActivityView(items: [viewModel.renderFinalImage()])
-        }
-        .navigationTitle("Редактирование")
-        .onChange(of: viewModel.shouldDismissEditor) {
-            if viewModel.shouldDismissEditor {
-                dismiss()
+        .padding(.vertical, 8)
+    }
+
+    @ViewBuilder
+    private var editorOptions: some View {
+        VStack(spacing: 16) {
+            switch viewModel.selectedTool {
+            case .transform:
+                transformOptions
+            case .draw:
+                drawOptions
+            case .text:
+                textOptions
+            case .filters:
+                filterOptions
             }
+        }
+        .frame(maxHeight: 220)
+    }
+
+    private var transformOptions: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            Text(Constants.scaleLabel)
+                .font(.headline)
+            Slider(value: $viewModel.transformSettings.scale, in: 0.5...2)
+
+            Text(Constants.rotationLabel)
+                .font(.headline)
+            Slider(value: $viewModel.transformSettings.rotation, in: 0...360)
+        }
+        .padding()
+    }
+
+    private var drawOptions: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            ColorPicker(Constants.penColorLabel, selection: Binding(
+                get: { Color(viewModel.drawingSettings.color) },
+                set: { newColor in
+                    viewModel.drawingSettings.color = UIColor(newColor)
+                    viewModel.updateDrawingTool()
+                }
+            ))
+
+            VStack(alignment: .leading) {
+                Text(Constants.lineWidthLabel)
+                    .font(.subheadline)
+                Slider(value: $viewModel.drawingSettings.lineWidth, in: 1...15, step: 1)
+                    .onChange(of: viewModel.drawingSettings.lineWidth) {
+                        viewModel.updateDrawingTool()
+                    }
+            }
+        }
+        .padding()
+    }
+
+    private var textOptions: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            TextField(Constants.enterTextPlaceholder, text: $viewModel.textSettings.content)
+                .textFieldStyle(.roundedBorder)
+            
+            ColorPicker(Constants.textColorLabel, selection: $viewModel.textSettings.color)
+
+            VStack(alignment: .leading) {
+                Text(Constants.textSizeLabel)
+                    .font(.subheadline)
+                Slider(value: $viewModel.textSettings.size, in: 10...60, step: 1)
+            }
+        }
+        .padding()
+    }
+
+    private var filterOptions: some View {
+        HStack(spacing: 16) {
+            filterButton(image: viewModel.originalImage, title: Constants.originalTitle) {
+                viewModel.resetImage()
+            }
+            if let sepia = viewModel.sepiaPreview {
+                filterButton(image: sepia, title: Constants.sepiaTitle) {
+                    viewModel.applySepia()
+                }
+            }
+            if let invert = viewModel.invertPreview {
+                filterButton(image: invert, title: Constants.invertTitle) {
+                    viewModel.applyInvert()
+                }
+            }
+        }
+        .padding(.horizontal)
+    }
+
+    private func filterButton(image: UIImage, title: String, action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            VStack {
+                Image(uiImage: image)
+                    .resizable()
+                    .frame(width: 60, height: 60)
+                    .cornerRadius(8)
+                Text(title)
+                    .font(.caption)
+                    .foregroundColor(.primary)
+            }
+        }
+    }
+
+    private var bottomButtons: some View {
+        HStack(spacing: 16) {
+            Button(Constants.saveButtonTitle) {
+                viewModel.saveImage()
+            }
+            .frame(maxWidth: .infinity)
+            .padding()
+            .background(Color.blue)
+            .foregroundColor(.white)
+            .cornerRadius(10)
+
+            Button(Constants.shareButtonTitle) {
+                viewModel.prepareShareImage()
+            }
+            .frame(maxWidth: .infinity)
+            .padding()
+            .background(Color.blue)
+            .foregroundColor(.white)
+            .cornerRadius(10)
         }
     }
 }
