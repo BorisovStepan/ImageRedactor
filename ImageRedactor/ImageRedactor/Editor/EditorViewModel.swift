@@ -88,34 +88,29 @@ class EditorViewModel: ObservableObject {
     }
     
     func generateFilterPreview(type: PreviewFilterType) async -> UIImage? {
-        await withCheckedContinuation { continuation in
-            DispatchQueue.global(qos: .userInitiated).async {
-                guard let ciImage = CIImage(image: self.workingImage) else {
-                    continuation.resume(returning: nil)
-                    return
-                }
-                
-                let filter: CIFilter
-                switch type {
-                case .sepia:
-                    let sepia = CIFilter.sepiaTone()
-                    sepia.inputImage = ciImage
-                    sepia.intensity = 0.8
-                    filter = sepia
-                case .invert:
-                    let invert = CIFilter.colorInvert()
-                    invert.inputImage = ciImage
-                    filter = invert
-                }
-                
-                if let output = filter.outputImage,
-                   let cgimg = self.context.createCGImage(output, from: output.extent) {
-                    let fullImage = UIImage(cgImage: cgimg)
-                    let resizedImage = fullImage.resize(to: CGSize(width: 60, height: 60))
-                    continuation.resume(returning: resizedImage)
-                } else {
-                    continuation.resume(returning: nil)
-                }
+        guard let ciImage = CIImage(image: workingImage) else { return nil }
+
+        let filter: CIFilter
+        switch type {
+        case .sepia:
+            let sepia = CIFilter.sepiaTone()
+            sepia.inputImage = ciImage
+            sepia.intensity = 0.8
+            filter = sepia
+        case .invert:
+            let invert = CIFilter.colorInvert()
+            invert.inputImage = ciImage
+            filter = invert
+        }
+
+        guard let output = filter.outputImage else { return nil }
+
+        return await MainActor.run {
+            if let cgimg = context.createCGImage(output, from: output.extent) {
+                let fullImage = UIImage(cgImage: cgimg)
+                return fullImage.resize(to: CGSize(width: 60, height: 60))
+            } else {
+                return nil
             }
         }
     }
