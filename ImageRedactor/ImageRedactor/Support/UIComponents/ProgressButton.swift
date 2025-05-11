@@ -7,18 +7,17 @@
 
 import SwiftUI
 
-import SwiftUI
-
 struct ProgressButton: View {
     let title: String
     let backgroundColor: Color
     let textColor: Color
     let isLoading: Bool
+    let isDisabled: Bool
     let action: () -> Void
 
     var body: some View {
         Button(action: {
-            if !isLoading {
+            if !isLoading && !isDisabled {
                 action()
             }
         }) {
@@ -28,15 +27,15 @@ struct ProgressButton: View {
                         .progressViewStyle(CircularProgressViewStyle(tint: textColor))
                 } else {
                     Text(title)
-                        .foregroundColor(textColor)
+                        .foregroundColor(isDisabled ? .gray : textColor)
                         .fontWeight(.semibold)
                 }
             }
             .frame(maxWidth: .infinity)
             .padding()
-            .background(backgroundColor)
+            .background(isDisabled ? Color.gray.opacity(0.3) : backgroundColor)
             .cornerRadius(8)
         }
-        .disabled(isLoading)
+        .disabled(isLoading || isDisabled)
     }
 }

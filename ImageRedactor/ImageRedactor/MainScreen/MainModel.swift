@@ -6,3 +6,9 @@
 //
 
 import Foundation
+import SwiftUI
+import PhotosUI
+
+struct SelectedImageModel {
+    var image: UIImage
+}
