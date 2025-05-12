@@ -153,7 +153,7 @@ class EditorViewModel: ObservableObject {
     func saveImage() {
         Task {
             let renderedImage = await renderFinalImage()
-            PhotoSaver().save(renderedImage, onSuccess: {
+            PhotoSaver.shared.save(renderedImage, onSuccess: {
                 self.shouldDismissEditor = true
             }, onError: { error in
                 self.showSaveErrorAlert = true
