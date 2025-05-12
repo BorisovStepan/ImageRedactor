@@ -10,6 +10,10 @@ import UIKit
 final class PhotoSaver: NSObject {
     private var onSaveSuccess: (() -> Void)?
     private var onSaveError: ((Error) -> Void)?
+    
+    private override init() {}
+    
+    static let shared = PhotoSaver()
 
     func save(_ image: UIImage,
               onSuccess: @escaping () -> Void,
