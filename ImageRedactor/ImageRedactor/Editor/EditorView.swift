@@ -88,7 +88,13 @@ struct EditorView: View {
                         DragGesture()
                             .onChanged { value in
                                 if viewModel.selectedTool == .text {
-                                    viewModel.textSettings.position = value.location
+                                    let minX: CGFloat = .zero
+                                    let maxX: CGFloat = UIScreen.main.bounds.width
+                                    let minY: CGFloat = .zero
+                                    let maxY: CGFloat = UIScreen.main.bounds.height * 0.4
+                                    let clampedX = min(max(value.location.x, minX), maxX)
+                                    let clampedY = min(max(value.location.y, minY), maxY)
+                                    viewModel.textSettings.position = CGPoint(x: clampedX, y: clampedY)
                                 }
                             }
                     )
